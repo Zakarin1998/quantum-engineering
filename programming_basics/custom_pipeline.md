@@ -925,3 +925,146 @@ if __name__ == "__main__":
 * In ogni punto della pipeline è facile sostituire o aggiungere nuove implementazioni (es. un altro database, un altro algoritmo di similarità, un correttore grammaticale differente), senza riscrivere tutta la logica.
 
 Sentiti libero di personalizzare ulteriormente le soglie, i meccanismi di logging (es. usando `loguru`), o di aggiungere un’interfaccia Web/Streamlit per visualizzare i risultati. Questo esempio mostra nel dettaglio **come** i principi GRASP e i GoF Patterns possano guidare scelte di design solide, e fornisce una base su cui costruire ulteriori funzionalità (ad es. gestione delle tabelle nel “inconsistency checker”, report avanzati, ecc.). Se hai domande o vuoi approfondire un modulo specifico, fammi sapere!
+
+
+
+## 5. Approfondimento su altri prodotti, softwares e tecniche di confronto documenti
+
+Esistono alcuni progetti commerciali e di ricerca – sia “generalisti” sia verticalizzati su specifici domini (legale, compliance, scientifico) – che offrono funzionalità più o meno vicine a un “report di coerenza” su un insieme di documenti. Di seguito alcuni esempi e le tecniche che tipicamente impiegano:
+
+---
+
+### 1. Prodotti “enterprise” o SaaS
+
+#### 1.1 Kira Systems (ora parte di Litera)
+
+* **Cosa fa**: nata come piattaforma per l’analisi automatica di contratti, Kira aiuta a individuare clausole, estrarre entità e segnalare potenziali conflitti o condizioni contraddittorie all’interno di un corpus di documenti legali.
+* **Tecniche**:
+
+  * **Named-Entity Recognition (NER)** e pattern basati su regole per estrarre metadati (date, cifre, parti contrattuali, valori monetari).
+  * **Machine Learning supervisionato** per riconoscere clausole omogenee (ad es. “termine di risoluzione” vs. “termine di cessazione”).
+  * **Similarity search su embedding**: paragrafi o clausole simili vengono messi a confronto per evidenziare differenze in valori numerici (es. durate, importi), triggerando un warning quando due clausole simili contengono dati diversi o formulazioni potenzialmente opposte.
+
+#### 1.2 IBM Watson Knowledge Studio + Watson Discovery
+
+* **Cosa fa**: Watson Knowledge Studio (WKS) consente di costruire annotatori NLP custom (entità e relazioni) e Watson Discovery sfrutta questi annotatori per indicizzare e interrogare grandi corpora.
+* **Tecniche**:
+
+  * **Annotazione semantica**: viene definito un ontologia di entità e relazioni (es. “Prodotto”, “Prezzo”, “Data di rilascio”) su cui si allena un modello di NER/RE (Relation Extraction).
+  * **Costruzione di un Knowledge Graph** interno: documenti diversi vengono convertiti in triple (soggetto-predicato-oggetto). La coerenza viene controllata tramite **regole di inferenza** e **vincoli ontologici** (ad esempio, “se A è sottoclasse di B, allora non può esistere un doc in cui A viene dichiarato di non essere B”).
+  * **Semantic enrichment** con trasformazione in embedding, per verificare casi di near-duplicate detection e individuare frammenti contraddittori.
+
+#### 1.3 PoolParty Semantic Suite
+
+* **Cosa fa**: piattaforma di knowledge graph management e text mining focalizzata su enti governativi e grandi aziende.
+* **Tecniche**:
+
+  * **Linked Data e Tassi di Confidence**: analizza testi, converte frasi in entità URI e crea collegamenti (“sameAs”, “disjointWith”).
+  * **Validazione logica (OWL reasoning)**: applica ragionamenti di tipo ontologico per segnalare inconsistenze tra triple (es. un’entità “A” che compare come “both tizio e non-tizio”).
+  * **Semantic similarity** per clusterizzare paragrafi affini e poi individuare contraddizioni interne (es. due documenti paralleli con dati numerici discordanti).
+
+---
+
+### 2. Soluzioni Open-Source e Progetti di Ricerca
+
+#### 2.1 DeepDive (Stanford)
+
+* **Cosa fa**: framework di Knowledge Base Construction che estrae informazioni da testi, popolando un grafo di conoscenza e applicando **datalog rules** per validare la coerenza.
+* **Tecniche**:
+
+  * **Information Extraction** con feature-based ML (CRF, Stanford NER) per estrarre tuple (entità, relazione, valore).
+  * **Probabilistic Soft Logic** e **Rules** in Datalog per valutare la coerenza del Knowledge Graph. Es.: se esistono due tuple “(Prodotto X, prezzo, 10€)” e “(Prodotto X, prezzo, 12€)” all’interno dello stesso dominio, si genera un warning di conflitto.
+
+#### 2.2 Heterogeneous Information Network (HIN) Consistency Checking
+
+* Alcune librerie (ad esempio, **networkx** in combinazione con regole personalizzate) permettono di costruire un grafo eterogeneo (nodi=paragrafi, entità, valori; archi=relazioni estratte) e poi applicare **algoritmi di co-referenza** e **graph consistency** per trovare parti che dovrebbero combaciare ma restituiscono risultati opposti.
+
+#### 2.3 Progetti di Fact-Checking e NLI (Natural Language Inference)
+
+* **FEVER** (Fact Extraction and VERification) e **Glue/SuperGlue**: bench-marks accademici per la verifica di fatti. Anche se non si tratta di una “pipeline di knowledge base” a 360°, le soluzioni che ne derivano (modelli di **NLI** come BERT, RoBERTa addestrati su entailment/contradiction) possono essere messe in opera per:
+
+  1. Estrarre “asserzioni” (claim) da ogni paragrafo (attraverso OpenIE o rule-based IE).
+  2. Confrontare asserzione vs. asserzione su documenti diversi col **modello NLI**: se A implica non-A, segnalo un’incongruenza.
+* Vari toolkit open-source (ad es. **AllenNLP**, **HuggingFace Transformers**) offrono già un’API pronta per fare inference (entailment/contradiction) tra due frammenti testuali. Applicandola a tutte le coppie 1:1 di asserzioni si costruisce un report di “contraddizioni”.
+
+---
+
+### 3. Tecniche comuni utilizzate
+
+Riassumiamo le tecniche più ricorrenti nei prodotti/progetti citati:
+
+1. **Estrazione di Entità e Relazioni (NER/RE)**
+
+   * spesso basata su modelli supervisionati (CRF, BiLSTM, Transformers)
+   * consente di trasformare testo libero in triple o “asserzioni” su cui ragionare
+
+2. **Creazione di Knowledge Graph ed inferenza logica**
+
+   * si costruisce un grafo di conoscenza (nodi=entità, valori, concetti; archi=relazioni)
+   * si applicano regole ontologiche (OWL, Datalog) per verificare contraddizioni logiche a livello di grafo
+
+3. **Semantic Similarity e Near-Duplicate Detection**
+
+   * tecniche basate su embedding (Word2Vec, BERT, Sentence-Transformers) o algoritmi fuzzy (Levenshtein, RapidFuzz)
+   * servono a individuare paragrafi molto simili ma con differenze (es. numeriche o lessicali) che potrebbero sfuggire a un controllo puramente string-matching
+
+4. **Natural Language Inference (Entailment / Contradiction)**
+
+   * modelli NLI pre-addestrati (Transformers) che, dato un paio (premessa, ipotesi), restituiscono la probabilità di “entailment”, “contradiction” o “neutral”
+   * usati per verificare se una frase estratta in Doc A contraddice un’affermazione estratta in Doc B
+
+5. **Regole e Logica (Rule-Based Reasoning)**
+
+   * in domini molto strutturati (es. legale, medico, finanziario) si scrivono regole if-then o pattern regex per catturare le situazioni più comuni di incoerenza (es. date che non rispettano un ordine logico, parametri fuori range, clausole incompatibili)
+
+6. **Pipelining e Streaming di Dati**
+
+   * sistemi enterprise tendono a usare architetture a microservizi, con code (Kafka, RabbitMQ) ed eventi (Observer), per scalare il controllo di coerenza su migliaia di documenti in parallelo
+
+---
+
+### 4. Confronto sintetico dei tool/progetti
+
+| Nome / Prodotto                  | Dominio Principale        | Tecniche chiave                                 | Focus di incoerenza                           |
+| -------------------------------- | ------------------------- | ----------------------------------------------- | --------------------------------------------- |
+| **Kira Systems (Litera)**        | Legale / Contratti        | NER/RE, ML supervisionato, fuzzy similarity     | Clausole duplici/conflittuali                 |
+| **IBM Watson (WKS + Discovery)** | Multi-settore             | NER/RE, Knowledge Graph, OWL reasoning          | Violazioni ontologiche/contraddizioni logiche |
+| **PoolParty Semantic Suite**     | Aziendale / Knowledge Mgt | Linked Data, Ontologie OWL, semantic similarity | Coerenza semantica e ontologica               |
+| **DeepDive (Stanford)**          | Ricerca / Scientifico     | IE (CRF), Probabilistic Logic, POG/Rules        | Triple KG inconsistency                       |
+| **FEVER / NLI-based**            | Fact-Checking ( ricerca ) | NLI (BERT, Transformers), OpenIE                | Contradiction tra asserzioni                  |
+
+---
+
+### 4.1 Quando orientarsi verso un approccio “NLI” vs. uno “KG+Regole”?
+
+* **NLI (Natural Language Inference)**
+
+  * **Pro**: applicabile a qualunque testo, non richiede un’ontologia predefinita; con modelli pre-addestrati è già “plug-and-play”.
+  * **Contro**: meno trasparente (black-box), può dare false positive/negative se i modelli non sono bene calibrati sul dominio.
+  * **Ideale**: se la knowledge base è eterogenea, senza uno schema stretto, e si vogliono trovare contraddizioni “di senso” (es. affermazioni opposte).
+
+* **KG + Regole (Ontologie, Datalog, OWL Reasoning)**
+
+  * **Pro**: molto preciso in domini dove gli attributi/relazioni sono ben definiti (finanza, legale, sanitario); le regole sono spiegabili e tracciabili.
+  * **Contro**: richiede uno sforzo iniziale significativo per modellare l’ontologia e le regole; meno flessibile con testo “libero”.
+  * **Ideale**: se si dispone di un modello concettuale consolidato (ad es. un glossario di concetti e relazioni) e si desidera garanzia formale di coerenza.
+
+---
+
+### 5. Conclusione
+
+Se il tuo obiettivo è avere un **report di coerenza** (o meglio: “incongruenza”) sull’intera knowledge base, puoi guardare a queste soluzioni come ispirazione:
+
+1. **Se il tuo dominio è strutturato** (contratti, specifiche tecniche, normative), conviene costruire un’esportazione in **Knowledge Graph** e applicare regole di validazione (OWL/Datalog). Tool come IBM Watson Knowledge Studio o PoolParty offrono già pipeline di questo tipo.
+
+2. **Se hai documenti generici o eterogenei**, potresti costruire un motore basato su **NLI (entailment/contradiction)**. In pratica:
+
+   * Estrai “asserzioni” (claim) da ogni paragrafo (OpenIE, RegEx, NER/RE).
+   * Applica un modello di entailment (es. BERT‐MNLI, DeBERTa) a tutte le coppie di claim 1:1: se la probabilità di “contradiction” supera la soglia, segnali un warning.
+
+3. **Per dimensioni molto grandi** (centinaia o migliaia di documenti), dividi il flusso in due fasi:
+
+   * Un primo filtro “coarse” con similarità testuale (TF-IDF o embedding + ANN search) per isolare paragrafi potenzialmente simili.
+   * Su quel sottoinsieme ristretto esegui il controllo fine con NLI o rules di KG.
+
+In sintesi, non esiste “un unico prodotto” che vada bene per tutti; il taglio migliore dipende dal dominio dei documenti e dal livello di formalizzazione (ontologia/disciplina) richiesto. Tuttavia, piattaforme come **IBM Watson**, **PoolParty Semantic Suite** e soluzioni come **Kira Systems** (per il legale) sono sicuramente i punti di riferimento commerciali più maturi. Sul fronte open source, **DeepDive** o librerie come **AllenNLP + HuggingFace Transformers** (per NLI) rappresentano la strada più rapida per prototipare un controllo di contraddizioni su corpus testuali generici.
