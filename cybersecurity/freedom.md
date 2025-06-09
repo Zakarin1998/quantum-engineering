@@ -11,7 +11,130 @@ Questo piano ti guida passo passo in un percorso di:
 * **Gestione** legale, fisica e mentale della tua sicurezza
 * **Comprensione** e gestione dei limiti nei sistemi IA
 
-Per motivi di sicurezza, tutti i consigli sono generali, senza riferimenti geografici specifici.
+
+Ecco l’elenco di **tutte le entità** menzionate e dei **temi** affrontati nel testo:
+
+---
+
+## Temi principali
+
+1. **Privacy**
+2. **Sicurezza informatica**
+3. **Crittografia**
+4. **Hacking etico**
+5. **Impronta digitale & tracciabilità**
+6. **Identità digitale**
+7. **Reti private e comunicazione sicura**
+8. **Progetto crypto e indipendenza economica**
+9. **Protezione legale e fisica**
+10. **Mentalità e organizzazione**
+11. **Limiti nei sistemi IA**
+12. **Addestramento e supervisione IA**
+
+---
+
+## Entità (software, OS, strumenti, piattaforme, risorse, organizzazioni, libri e corsi)
+
+### Strumenti di scansione e privacy
+
+* **Malwarebytes**
+* **ClamAV**
+* **Tails OS**
+* **GrapheneOS**
+* **DeleteMe**
+
+### VPN, Tor, Email e comunicazioni cifrate
+
+* **Mullvad VPN**
+* **ProtonVPN**
+* **Tor Browser**
+* **ProtonMail**
+* **Tutanota**
+* **Signal**
+* **PGP / GPG**
+
+### Criptovalute & pagamenti anonimizzati
+
+* **Monero**
+* **Zcash**
+* **Bisq**
+
+### Fondamenti di crittografia
+
+* **AES (Advanced Encryption Standard)**
+* **RSA**
+* **Elliptic Curve Cryptography (ECC)**
+* **SHA-256**
+* **Post-Quantum Cryptography** (NIST PQC Project)
+
+### Piattaforme di formazione e risorse
+
+* **Coursera – “Cryptography I” (Dan Boneh)**
+* **“Practical Cryptography” (Ferguson & Schneier)**
+* **Udemy – Ethical Hacking Courses**
+* **Offensive Security – “Penetration Testing with Kali Linux”**
+* **EC-Council – CEH (Certified Ethical Hacker)**
+* **CompTIA – Security+**
+* **OverTheWire**
+* **CryptoHack**
+* **TryHackMe**
+* **Hack The Box**
+
+### Strumenti di rete e pentesting
+
+* **Wireshark**
+* **Metasploit**
+* **Nmap**
+* **Burp Suite**
+
+### Comunicazione decentralizzata & VPN personale
+
+* **Njalla (VPS provider anonimo)**
+* **OpenVPN**
+* **WireGuard**
+* **Matrix** (self-hosted)
+* **Session**
+* **goTenna**
+
+### Blockchain, smart contract & sviluppo crypto
+
+* **Ethereum**
+* **Solidity**
+* **Mimblewimble**
+* **Rust**
+* **Go**
+* **ICO / IDO**
+* **Launchpool**
+* **CertiK**
+* **ConsenSys Academy**
+* **“Mastering Ethereum” (Antonopoulos)**
+
+### Sicurezza fisica e backup
+
+* **GPS spoofing**
+* **VeraCrypt**
+
+### Organizzazioni e comunità
+
+* **Electronic Frontier Foundation (EFF)**
+* **Privacy International**
+* **American Civil Liberties Union (ACLU)**
+* **TCM Security**
+* **Brennan Center**
+
+### Libri su IA e bias algoritmico
+
+* **“Artificial Intelligence: A Guide for Thinking Humans” (Melanie Mitchell)**
+* **“Weapons of Math Destruction” (Cathy O’Neil)**
+
+### Corsi e toolkit IA
+
+* **Elements of AI**
+* **Ethics of AI** (Coursera, edX)
+* **Hugging Face** (modelli open source)
+* **OpenAI GPT API** (parametri di controllo)
+
+Se ti serve un approfondimento su una di queste entità o temi, fammi sapere!
 
 ---
 
