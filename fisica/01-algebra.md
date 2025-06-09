@@ -145,3 +145,106 @@ $$
 4. **Cambio di base**:
    Data $\mathcal{E}$ e $\mathcal{F}$ in $\R^3$, calcola la matrice di cambio e trasforma le coordinate di un vettore.
 
+
+## Esercizio 1
+
+Perfetto: iniziamo con il **Primo esercizio** — verificare che
+
+$$
+W = \{(x,y,z)\in\R^3 : x + 2y - z = 0\}
+$$
+
+sia un **sottospazio vettoriale** di $\R^3$. Procediamo passo-passo seguendo la definizione.
+
+---
+
+## Esercizio 1: $W = \{(x,y,z): x + 2y - z = 0\}$
+
+Per dimostrare che $W\subseteq \R^3$ è un sottospazio, verifichiamo i tre criteri:
+
+1. **Zero**: lo $0$ di $\R^3$ appartiene a $W$.
+2. **Chiusura per somma**: se $u,v\in W$, allora $u+v\in W$.
+3. **Chiusura per moltiplicazione scalare**: se $u\in W$ e $\alpha\in\R$, allora $\alpha\,u\in W$.
+
+---
+
+### 1. Il vettore zero
+
+* Lo zero di $\R^3$ è $\mathbf{0} = (0,0,0)$.
+* Calcolo: $0 + 2\cdot0 - 0 = 0$.
+* Quindi $\mathbf{0}$ soddisfa l’equazione e $\mathbf{0}\in W$.
+
+> **Conclusione:** $W$ contiene lo $0$.
+
+---
+
+### 2. Chiusura per somma
+
+Siano
+
+$$
+u = (x_1,y_1,z_1),\quad v = (x_2,y_2,z_2)
+$$
+
+due elementi di $W$. Allora:
+
+1. Poiché $u\in W$, $x_1 + 2y_1 - z_1 = 0$.
+2. Poiché $v\in W$, $x_2 + 2y_2 - z_2 = 0$.
+
+Consideriamo la loro somma:
+
+$$
+u + v = (x_1 + x_2,\;y_1 + y_2,\;z_1 + z_2).
+$$
+
+Verifichiamo l’equazione per $u+v$:
+
+$$
+(x_1 + x_2) \;+\; 2(y_1 + y_2)\;-\; (z_1 + z_2)
+= (x_1 + 2y_1 - z_1)\;+\;(x_2 + 2y_2 - z_2)
+= 0 + 0 = 0.
+$$
+
+Quindi $u + v$ appartiene ancora a $W$.
+
+> **Conclusione:** $W$ è chiuso rispetto alla somma.
+
+---
+
+### 3. Chiusura per moltiplicazione scalare
+
+Sia $u = (x,y,z)\in W$ e $\alpha\in\R$. Allora $x + 2y - z = 0$. Consideriamo:
+
+$$
+\alpha\,u = (\alpha x,\;\alpha y,\;\alpha z).
+$$
+
+Verifichiamo:
+
+$$
+(\alpha x) \;+\; 2(\alpha y)\;-\; (\alpha z)
+= \alpha (x + 2y - z)
+= \alpha \cdot 0 = 0.
+$$
+
+Quindi $\alpha\,u \in W$.
+
+> **Conclusione:** $W$ è chiuso rispetto alla moltiplicazione per scalare.
+
+---
+
+## Conclusione complessiva
+
+Avendo verificato:
+
+1. $\mathbf{0} \in W$,
+2. $u,v\in W \implies u+v\in W$,
+3. $u\in W,\,\alpha\in\R \implies \alpha u\in W$,
+
+possiamo affermare che **$W$ è un sottospazio vettoriale di $\R^3$**.
+
+---
+
+Se tutto chiaro, procediamo con l’**Esercizio 2**!
+
+## Esercizio 2
