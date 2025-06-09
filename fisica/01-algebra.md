@@ -470,3 +470,73 @@ Le “coordinate” di $q$ rispetto alla base $\{1,x,x^2\}$ sono quindi $(2,\,-5
 
 Se tutto è chiaro, procediamo con l’**Esercizio 3**!
 
+---
+
+## Esercizio 3: Dipendenza di insiemi troppo grandi
+
+**Enunciato.**
+Sia $V$ uno spazio vettoriale di dimensione finita $\dim V = n$. Mostra che **ogni** insieme di $k > n$ vettori in $V$ è **linearmente dipendente**.
+
+---
+
+### 1. Richiami di definizioni
+
+* Una **base** di $V$ è un insieme $\{e_1,\dots,e_n\}$ di $n$ vettori che è simultaneamente
+
+  1. **indipendente**: nessuna combinazione lineare non banale          $\sum_{i=1}^n \alpha_i e_i = 0$
+     ha tutti gli $\alpha_i\neq0$;
+  2. **generatrice**: ogni $v\in V$ si scrive come $\sum_i \beta_i e_i$.
+
+* **Dimensione** $\dim V = n$ significa “esistono basi con esattamente $n$ vettori, e nessuna base con più di $n$ vettori”.
+
+* Un insieme $\{v_1,\dots,v_k\}$ è **linearmente dipendente** se
+
+  $$
+    \exists\,(\alpha_1,\dots,\alpha_k)\neq(0,\dots,0)
+    \quad\text{tale che}\quad
+    \sum_{i=1}^k \alpha_i\,v_i = 0.
+  $$
+
+---
+
+### 2. Strategia della dimostrazione
+
+Dimostriamo per **contraddizione**:
+
+1. Supponiamo esista un insieme di $k>n$ vettori in $V$ che sia **indipendente**.
+2. Ne ricaviamo che si può estenderlo (o è già) a una base di $V$ con almeno $k$ vettori.
+3. Ma per definizione non può esistere una base con più di $n$ vettori.
+4. Contraddizione.
+
+---
+
+### 3. Dettaglio del ragionamento
+
+Siano $S = \{v_1,\dots,v_k\}\subset V$ con $k>n$.
+
+1. **Supponiamo per assurdo** che $S$ sia indipendente.
+2. Allora, per il teorema dell’estensione di un insieme indipendente a base, possiamo aggiungere vettori a $S$ (se necessario) fino a ottenere una base $B$ di $V$.
+3. In ogni caso il numero di vettori di $B$ sarà $\ge |S| = k > n$. Quindi $|B| > n$.
+4. Ma questo viola la definizione di dimensione, che dice che ogni base di $V$ ha **esattamente** $n$ elementi.
+5. **Conclusione:** l’ipotesi che $S$ sia indipendente è falsa. Quindi **ogni** insieme di più di $n$ vettori in $V$ è **linearmente dipendente**.
+
+---
+
+### 4. Esempio concreto in $\R^2$
+
+* Per $\R^2$ abbiamo $\dim \R^2 = 2$.
+* Prendi tre vettori qualsiasi, ad esempio
+
+  $$
+    u=(1,0),\quad v=(0,1),\quad w=(2,-1).
+  $$
+* Qualunque terna in $\R^2$ è dipendente:
+  basta risolvere
+  $\alpha u+\beta v+\gamma w=0$
+  e troverai sempre una soluzione non banale $(\alpha,\beta,\gamma)\neq(0,0,0)$.
+
+---
+
+Con questo l’esercizio è risolto: abbiamo mostrato che in uno spazio di dimensione $n$ non esiste alcun insieme indipendente di misura superiore a $n$.
+
+
