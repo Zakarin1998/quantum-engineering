@@ -248,3 +248,104 @@ possiamo affermare che **$W$ è un sottospazio vettoriale di $\R^3$**.
 Se tutto chiaro, procediamo con l’**Esercizio 2**!
 
 ## Esercizio 2
+
+Perfetto, passiamo all’**Esercizio 2**:
+
+> **Costruisci una base per lo spazio dei polinomi di grado ≤ 2**,
+> cioè
+>
+> $$
+> P_2 = \{\,a_0 + a_1 x + a_2 x^2 : a_0,a_1,a_2\in\R\}.
+> $$
+
+---
+
+## 1. Definizione dello spazio
+
+* Ogni $p(x)\in P_2$ si può scrivere come
+
+  $$
+    p(x) = a_0 + a_1 x + a_2 x^2,
+    \quad a_i\in\R.
+  $$
+* Quindi $P_2$ è un sottospazio di tutte le funzioni polinomiali su $\R$.
+
+---
+
+## 2. Proposta di insieme di generatori
+
+Consideriamo l’insieme
+
+$$
+B = \{\,1,\;x,\;x^2\}.
+$$
+
+### 2.1 Generazione
+
+Dobbiamo mostrare che ogni $p(x)\in P_2$ si può scrivere come combinazione lineare di $1, x, x^2$:
+
+$$
+p(x) = a_0\cdot 1 \;+\; a_1\cdot x \;+\; a_2\cdot x^2,
+$$
+
+che è immediatamente vero dalla forma generale di $p(x)$.
+
+> **Conclusione:** $\operatorname{span}(B) = P_2$.
+
+---
+
+## 3. Verifica dell’indipendenza lineare
+
+Verifichiamo che $\{1,x,x^2\}$ sia linearmente indipendente.
+
+Supponiamo
+
+$$
+\alpha\,1 \;+\;\beta\,x\;+\;\gamma\,x^2 \;=\; 0\quad\text{(il polinomio nullo)},
+$$
+
+cioè
+
+$$
+\alpha + \beta x + \gamma x^2 = 0
+\quad\forall x\in\R.
+$$
+
+Un polinomio identicamente zero ha tutti i coefficienti nulli:
+
+$$
+\alpha = 0,\quad \beta = 0,\quad \gamma = 0.
+$$
+
+> **Conclusione:** nessuna combinazione non banale annulla, quindi $B$ è indipendente.
+
+---
+
+## 4. Conclusione: $B$ è una base
+
+* **Spanning**: ogni $p(x)\in P_2$ si esprime come combinazione di $1,x,x^2$.
+* **Indipendenza**: gli unici scalari che annullano la combinazione sono nulli.
+
+Perciò
+
+$$
+\boxed{\,\{1,\,x,\,x^2\}\ \text{è una base di }P_2,\quad \dim P_2 = 3.}
+$$
+
+---
+
+## 5. (Opzionale) Esercizio di verifica
+
+**Esempio:** prendi il polinomio $q(x) = 2 - 5x + 3x^2$.
+Scrivilo come combinazione:
+
+$$
+q(x) = 2\cdot 1 \;+\;(-5)\cdot x\;+\;3\cdot x^2.
+$$
+
+Le coordinate rispetto alla base $B$ sono $[q]_B = (2,\,-5,\,3)$.
+
+---
+
+Se tutto è chiaro, procediamo con l’**Esercizio 3**!
+
