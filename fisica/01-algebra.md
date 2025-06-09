@@ -260,19 +260,19 @@ Perfetto, passiamo all’**Esercizio 2**:
 
 ---
 
-## 1. Definizione dello spazio
+### 1. Definizione dello spazio
 
-* Ogni $p(x)\in P_2$ si può scrivere come
+Ogni $p(x)\in P_2$ si può scrivere come
 
-  $$
-    p(x) = a_0 + a_1 x + a_2 x^2,
-    \quad a_i\in\R.
-  $$
-* Quindi $P_2$ è un sottospazio di tutte le funzioni polinomiali su $\R$.
+$$
+p(x) = a_0 + a_1 x + a_2 x^2, \quad a_i \in \mathbb{R}.
+$$
+
+Quindi $P_2$ è un sottospazio di tutte le funzioni polinomiali su $\mathbb{R}$.
 
 ---
 
-## 2. Proposta di insieme di generatori
+### 2. Proposta di insieme di generatori
 
 Consideriamo l’insieme
 
@@ -280,17 +280,21 @@ $$
 B = \{\,1,\;x,\;x^2\}.
 $$
 
-### 2.1 Generazione
+#### 2.1 Generazione
 
-Dobbiamo mostrare che ogni $p(x)\in P_2$ si può scrivere come combinazione lineare di $1, x, x^2$:
+Dobbiamo mostrare che ogni $p(x)\in P_2$ si può scrivere come combinazione lineare di $1,\,x,\,x^2$:
 
 $$
-p(x) = a_0\cdot 1 \;+\; a_1\cdot x \;+\; a_2\cdot x^2,
+p(x) = a_0 \cdot 1 \;+\; a_1 \cdot x \;+\; a_2 \cdot x^2,
 $$
 
 che è immediatamente vero dalla forma generale di $p(x)$.
 
-> **Conclusione:** $$\operatorname{span}(B) = P_2$$.
+**Conclusione:**
+
+$$
+\text{span}(B) = P_2.
+$$
 
 ---
 
