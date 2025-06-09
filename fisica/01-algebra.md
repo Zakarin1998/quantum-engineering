@@ -351,5 +351,122 @@ Le coordinate rispetto alla base $B$ sono $[q]_B = (2,\,-5,\,3)$.
 
 ---
 
+### Soluzione dell'esercizio di verifica
+
+**Dato** il polinomio
+
+$$
+q(x) = 2 - 5x + 3x^2
+$$
+
+e la base $B = \{\,1,\,x,\,x^2\}$ dello spazio $P_2$.
+
+### 1. Scrittura come combinazione lineare
+
+Ogni polinomio $p(x)\in P_2$ si esprime come
+
+$$
+p(x) = a_0\cdot1 \;+\; a_1\cdot x \;+\; a_2\cdot x^2.
+$$
+
+Confrontando con $q(x)$, riconosciamo immediatamente:
+
+* $a_0 = 2$ (termine costante)
+* $a_1 = -5$ (coefficiente di $x$)
+* $a_2 = 3$ (coefficiente di $x^2$)
+
+Quindi:
+
+$$
+q(x) 
+= 2\cdot1 \;+\; (-5)\cdot x \;+\; 3\cdot x^2.
+$$
+
+### 2. Coordinate rispetto alla base $B$
+
+Le coordinate di $q$ nel sistema di riferimento dato da $B$ sono semplicemente il vettore dei coefficienti $(a_0,a_1,a_2)$.
+
+$$
+[q]_B = (2,\,-5,\,3).
+$$
+
+---
+
+**Risultato finale:**
+
+$$
+q(x) = 2\cdot1 \;+\;(-5)\cdot x\;+\;3\cdot x^2,
+\quad
+[q]_B = (2,\,-5,\,3).
+$$
+
+---
+
+## Che cos’è $P_2$?
+
+Immagina che i polinomi di grado ≤ 2 (cioè quelli che possono avere al massimo $x^2$) siano dei “mattoncini” con cui puoi costruire tutti gli altri polinomi di quel genere. L’**esempio 2** ti ha mostrato quali sono i tre mattoncini fondamentali e perché bastano.
+
+$P_2$ è l’insieme di tutti i polinomi che si possono scrivere così:
+
+$$
+p(x) = a_0 + a_1\,x + a_2\,x^2,
+$$
+
+dove $a_0$, $a_1$ e $a_2$ sono numeri a tua scelta. Pensa a $a_0$ come al “mattoncino costante”, $a_1$ come al “mattoncino in $x$” e $a_2$ come al “mattoncino in $x^2$”.
+
+---
+
+## I tre mattoncini base
+
+Abbiamo scelto questi tre polinomi come base (i nostri “mattoncini”):
+
+1. $1$
+2. $x$
+3. $x^2$
+
+### Perché bastano?
+
+* **Generano tutto**: Qualsiasi polinomio $p(x)$ in $P_2$ è proprio
+
+  $$
+  p(x) = a_0 \cdot 1 \;+\; a_1 \cdot x \;+\; a_2 \cdot x^2.
+  $$
+
+  È come dire “per costruire la tua casetta (qualsiasi polinomio) prendi $a_0$ mattoncini di tipo 1, $a_1$ mattoncini di tipo $x$ e $a_2$ mattoncini di tipo $x^2$”.
+
+* **Indipendenti**: Non puoi ottenere il mattoncino “$x$” usando solo “1” e “$x^2$”, né “1” usando solo “$x$” e “$x^2$”, ecc. Sono davvero tre pezzi diversi, che non si sovrappongono.
+
+---
+
+## Un piccolo esempio pratico
+
+Prendi il polinomio
+
+$$
+q(x) = 2 \;-\; 5x \;+\; 3x^2.
+$$
+
+Per scriverlo con i nostri mattoncini:
+
+* Usa **2** pezzi di “1” → $2\cdot1$
+* Usa **–5** pezzi di “$x$” → $-5\cdot x$
+* Usa **3** pezzi di “$x^2$” → $3\cdot x^2$
+
+E ottieni
+
+$$
+q(x) = 2\cdot 1 + (-5)\cdot x + 3\cdot x^2.
+$$
+
+Le “coordinate” di $q$ rispetto alla base $\{1,x,x^2\}$ sono quindi $(2,\,-5,\,3)$.
+
+---
+
+### In parole semplici
+
+* **Spazio $P_2$**: è come un armadio di polinomi “fino al secondo piano” ($x^2$).
+* **Base**: è il kit di costruzione minimo: i tre pezzi “1”, “$x$” e “$x^2$”.
+* **Costruzione**: ogni polinomio è una somma di questi pezzi con un certo numero di ognuno.
+
 Se tutto è chiaro, procediamo con l’**Esercizio 3**!
 
