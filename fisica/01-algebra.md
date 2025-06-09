@@ -290,7 +290,7 @@ $$
 
 che è immediatamente vero dalla forma generale di $p(x)$.
 
-> **Conclusione:** $\operatorname{span}(B) = P_2$.
+> **Conclusione:** $$\operatorname{span}(B) = P_2$$.
 
 ---
 
