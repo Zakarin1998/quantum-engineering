@@ -12,19 +12,96 @@
 
 ## 2. Derivazione dell’Equazione d’Onda Unidimensionale
 
-Consideriamo una corda elastica tesa di densità lineare \$\rho\$ e tensione \$T\$, parametrizzata dalla coordinata spaziale \$x\$ e dal tempo \$t\$.
+Consideriamo una corda elastica tensionata, di densità lineare \$\rho\$ e tensione \$T\$, parametrizzata dalla coordinata spaziale \$x\$ e dal tempo \$t\$.
 
-1. **Equilibrio delle forze** su un elemento infinitesimo di corda lungo \$dx\$:
+1. **Equilibrio delle forze**
+   Su un elemento infinitesimo di corda di lunghezza \$dx\$, le forze orizzontali di tensione ai due estremi sono
 
-   * Tensione ai bordi: \$T\bigl\[\partial\_x y(x+dx,t) - \partial\_x y(x,t)\bigr] \approx T,\partial\_{xx}y,dx\$.
-   * Forza di massa inerziale: \$\rho,dx;\partial\_{tt}y\$.
-2. **Seconda legge di Newton** $\rho\,dx\;\partial_{tt}y = T\,\partial_{xx}y\,dx$
-   da cui si ottiene
-   $\boxed{\partial_{tt}y(x,t) = v^2\,\partial_{xx}y(x,t)\,,\quad v=\sqrt{\tfrac{T}{\rho}}\,.}$
+   $$
+     T\,\frac{\partial y}{\partial x}\bigg|_{x+dx}
+     \;-\;
+     T\,\frac{\partial y}{\partial x}\bigg|_{x}
+     \;\approx\;
+     T\,\frac{\partial^2 y}{\partial x^2}\,dx.
+   $$
+
+2. **Forza di massa inerziale**
+   La massa dell’elemento è \$\rho,dx\$, perciò la sua accelerazione verticale \$\partial\_{tt}y\$ genera una forza
+
+   $$
+     F_{\rm inerziale}
+     =
+     \rho\,dx\;\frac{\partial^2 y}{\partial t^2}.
+   $$
+
+3. **Applicazione della Seconda Legge di Newton**
+   Ponendo somma delle forze uguale a massa per accelerazione:
+
+   $$
+     \rho\,dx\;\frac{\partial^2 y}{\partial t^2}
+     =
+     T\,\frac{\partial^2 y}{\partial x^2}\,dx.
+   $$
+
+   Semplificando \$dx\$ su entrambi i membri otteniamo l’**equazione d’onda unidimensionale**:
+
+   $$
+     \boxed{
+       \frac{\partial^2 y(x,t)}{\partial t^2}
+       =
+       v^2 \;\frac{\partial^2 y(x,t)}{\partial x^2}
+       \,\quad
+       v = \sqrt{\frac{T}{\rho}}\;.
+     }
+   $$
+
+In questa forma, \$v\$ è la velocità di propagazione delle onde lungo la corda.
 
 ---
 
-Consideriamo una corda elastica tensionata, di densità lineare $\rho$ e tensione $T$, parametrizzata dalla coordinata spaziale $x$ e dal tempo $t$.
+### Spiegazione dettagliata passo per passo
+
+Per completezza, ecco un’esposizione più approfondita dei singoli passaggi:
+
+1. **Elemento infinitesimo e massa**
+
+   * Tratto di corda di lunghezza \$dx\$ centrato in \$x\$.
+   * Massa \$m = \rho,dx\$.
+
+2. **Forze di tensione**
+
+   * All'angolo \$\theta(x)\$, \$\sin\theta(x) \approx \partial\_x y(x,t)\$.
+   * Componente verticale al punto \$x\$: \$T\sin\theta(x) \approx T,\partial\_x y(x,t)\$.
+   * Risultante verticale tra \$x\$ e \$x+dx\$:
+
+     $$
+       T\,\partial_x y(x+dx,t) - T\,\partial_x y(x,t) \approx T\,\partial_{xx}y(x,t)\,dx.
+     $$
+
+3. **Forza d’inerzia**
+
+   * Accelerazione verticale \$\partial\_{tt}y(x,t)\$.
+   * Forza: \$m,\partial\_{tt}y = \rho,dx;\partial\_{tt}y(x,t)\$.
+
+4. **Seconda legge**
+
+   * \$\rho,dx;\partial\_{tt}y = T,\partial\_{xx}y,dx\$.
+   * Divide per \$dx\$ e introduce \$v=\sqrt{T/\rho}\$.
+
+5. **Equazione d’onda**
+
+   * Forma finale \$\partial\_{tt}y = v^2,\partial\_{xx}y\$.
+
+6. **Interpretazione**
+
+   * \$\partial\_{xx}y\$ è la curvatura: con curvatura verso il basso, la tensione genera forza verso l’alto.
+   * La velocità di propagazione \$v\$ cresce con la tensione e diminuisce con la densità.
+
+---
+
+### Principi fondamentali del moto
+
+Considerando quindi una corda elastica tensionata, di densità lineare $\rho$ e tensione $T$, parametrizzata dalla coordinata spaziale $x$ e dal tempo $t$, entrano in gioco i seguenti fattori:
 
 1. **Equilibrio delle forze**
    Su un elemento infinitesimo di corda di lunghezza $dx$, le forze orizzontali di tensione ai due estremi sono
@@ -67,123 +144,9 @@ Consideriamo una corda elastica tensionata, di densità lineare $\rho$ e tension
      }
    $$
 
-In questa forma, $v$ è la velocità di propagazione delle onde lungo la corda.
+In questa forma, $v$ è la velocità di propagazione delle onde lungo la corda. Ecco una spiegazione più dettagliata, passo per passo, con le formule corrette:
 
 ---
-
-Ecco una spiegazione più dettagliata, passo per passo, con le formule corrette:
-
----
-
-### 1. Piccolo elemento di corda
-
-Prendiamo un tratto infinitesimo di corda di lunghezza $dx$, centrato in $x$. La sua massa è
-
-$$
-m = \rho\,dx,
-$$
-
-dove $\rho$ è la densità lineare (massa per unità di lunghezza).
-
----
-
-### 2. Forze di tensione ai bordi
-
-La tensione $T$ in un filo ideale è costante in modulo, ma la sua direzione cambia leggermente.
-
-* All’estremo in $x$, la corda forma un angolo $\theta(x)$ con l’orizzontale, tale che
-
-  $$
-  \tan\theta(x)
-  = \frac{\partial y}{\partial x}(x,t).
-  $$
-* All’estremo in $x + dx$, l’angolo è $\theta(x+dx)$.
-
-Le componenti verticali delle tensioni sono:
-
-$$
-\begin{aligned}
-& T\sin\theta(x+dx)
-\;\approx\;
-T\,\frac{\partial y}{\partial x}(x+dx,t),\\
-& T\sin\theta(x)
-\;\approx\;
-T\,\frac{\partial y}{\partial x}(x,t).
-\end{aligned}
-$$
-
-Quindi la risultante totale delle forze verticali è
-
-$$
-F_{\text{tensione}}
-\,=\,
-T\frac{\partial y}{\partial x}(x+dx,t)
-\;-\;
-T\frac{\partial y}{\partial x}(x,t)
-\;\approx\;
-T\,\frac{\partial^2 y}{\partial x^2}(x,t)\,dx.
-$$
-
----
-
-### 3. Forza di inerzia
-
-La seconda legge di Newton per il moto verticale del tratto $dx$ è
-
-$$
-F_{\text{inerziale}}
-\,=\,
-m\,\frac{\partial^2 y}{\partial t^2}
-\,=\,
-\rho\,dx\;\frac{\partial^2 y}{\partial t^2}(x,t).
-$$
-
----
-
-### 4. Equilibrio dinamico
-
-Imponiamo che la somma delle forze verticali sia uguale alla forza di inerzia:
-
-$$
-\rho\,dx\;\frac{\partial^2 y}{\partial t^2}
-\;=\;
-T\,\frac{\partial^2 y}{\partial x^2}\,dx.
-$$
-
-Semplificando $dx$, otteniamo l’**equazione d’onda**:
-
-$$
-\frac{\partial^2 y(x,t)}{\partial t^2}
-=
-\frac{T}{\rho}\;\frac{\partial^2 y(x,t)}{\partial x^2}.
-$$
-
-Definendo la velocità di propagazione
-
-$$
-v \;=\;\sqrt{\frac{T}{\rho}},
-$$
-
-la scrittura finale è
-
-$$
-\boxed{
-\frac{\partial^2 y}{\partial t^2}
-=
-v^2\,\frac{\partial^2 y}{\partial x^2}
-}.
-$$
-
----
-
-### 5. Interpretazione fisica
-
-* $\displaystyle \frac{\partial^2 y}{\partial x^2}$ misura la «curvatura» della corda in $x$.
-* Se la corda è curva verso il basso ($\partial^2_x y<0$), la tensione tende a tirarla verso l’alto, accelerandone la massa.
-* La velocità $v$ dipende solo da tensione e densità: tensione maggiore → onde più veloci; densità maggiore → onde più lente.
-
-Spero che ora la derivazione sia più chiara! Fammi sapere se vuoi approfondire qualche passaggio in particolare.
-
 
 ## 3. Forma Generale in Più Dimensioni
 
