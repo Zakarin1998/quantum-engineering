@@ -99,7 +99,7 @@ Per completezza, ecco un’esposizione più approfondita dei singoli passaggi:
 
 ---
 
-### Principi fondamentali del moto
+### Principi fondamentali
 
 Considerando quindi una corda elastica tensionata, di densità lineare $\rho$ e tensione $T$, parametrizzata dalla coordinata spaziale $x$ e dal tempo $t$, entrano in gioco i seguenti fattori:
 
@@ -144,8 +144,7 @@ Considerando quindi una corda elastica tensionata, di densità lineare $\rho$ e 
      }
    $$
 
-In questa forma, $v$ è la velocità di propagazione delle onde lungo la corda. Ecco una spiegazione più dettagliata, passo per passo, con le formule corrette:
-
+In questa forma, $v$ è la velocità di propagazione delle onde lungo la corda.
 ---
 
 ## 3. Forma Generale in Più Dimensioni
