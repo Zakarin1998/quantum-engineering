@@ -35,27 +35,27 @@ Consideriamo una corda elastica tensionata, di densità lineare \$\rho\$ e tensi
    $$
 
 3. **Applicazione della Seconda Legge di Newton**
-   Ponendo somma delle forze uguale a massa per accelerazione:
+   Ponendo la somma delle forze uguale a massa per accelerazione:
 
    $$
-     \rho\,dx\;\frac{\partial^2 y}{\partial t^2}
-     =
-     T\,\frac{\partial^2 y}{\partial x^2}\,dx.
+   \rho\,dx\,\frac{\partial^2 y}{\partial t^2}
+   =
+   T\,\frac{\partial^2 y}{\partial x^2}\,dx
    $$
 
    Semplificando \$dx\$ su entrambi i membri otteniamo l’**equazione d’onda unidimensionale**:
 
    $$
-     \boxed{
-       \frac{\partial^2 y(x,t)}{\partial t^2}
-       =
-       v^2 \;\frac{\partial^2 y(x,t)}{\partial x^2}
-       \,\quad
-       v = \sqrt{\frac{T}{\rho}}\;.
-     }
+   \boxed{
+     \frac{\partial^2 y(x,t)}{\partial t^2}
+     =
+     v^2 \frac{\partial^2 y(x,t)}{\partial x^2}
+     \quad\text{con}\quad
+     v = \sqrt{\frac{T}{\rho}}
+   }
    $$
 
-In questa forma, \$v\$ è la velocità di propagazione delle onde lungo la corda.
+   In questa forma, \$v\$ è la velocità di propagazione delle onde lungo la corda.
 
 ---
 
