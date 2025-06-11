@@ -194,6 +194,79 @@ print("Operazioni completate con successo")
 | **Caso d’uso ideale**  | Aggiornare o inserire dinamicamente nuovi vettori    | Rinomina, ridescrive, etichetta senza toccare embeddings      | Popolare o risincronizzare massivamente embeddings da un bucket GCS      |
 | **Locking / LRO**      | Sì, LRO asincrono                                    | Sì, LRO asincrono                                             | Sì, LRO asincrono                                                        |
 
+### Approfondimento sull'attributo`update_mask`
+
+Segue una spiegazione precisa sul funzionamento dell’attributo `update_mask` per gli **IndexDatapoint** in Google Vertex AI Matching Engine.
+
+---
+
+#### 🔑 Cosa fa l’`update_mask`
+
+* Quando invochi **`upsertDatapoints`** con un campo `update_mask`, stai specificando **su quali campi interni** di **ciascun datapoint** deve applicarsi l’aggiornamento.
+* Importante: l’`update_mask` si riferisce ai campi **interni del datapoint**, non alla richiesta intera ([cloud.google.com][1]).
+
+---
+
+#### 📌 Cosa significano i valori possibili
+
+* **`restricts`**
+  → Aggiorna solamente i campi **categorical restrict** (i `namespace` usati per filtro stringhe). Mantiene intatti gli altri campi, compresi i vettori e i numeric restrict.
+
+* **`numeric_restricts`**
+  → Aggiorna solo i campi **numeric restrict**, quelli relativi a restrizioni numeriche. Anche qui, vettori e categorical restrict rimangono invariati.
+
+* **`all_restricts`**
+  → Aggiorna **sia** i categorical che i numeric restrict. Utile per rimpiazzare in blocco i filtri del datapoint, senza toccare vettori o metadati.
+
+---
+
+#### 🌀 Quando usarli
+
+* Se hai bisogno di modificare solo i **filtri di ricerca** (es. cambiare categorie o limiti numerici), usa `update_mask` con `restricts`, `numeric_restricts` o `all_restricts`.
+* In questo modo eviti di rispedire il **feature\_vector**, risparmi operazioni e consumo di risorse, e mantieni intatto il resto del contenuto del datapoint.
+
+---
+
+#### 📋 Esempio `curl`
+
+```bash
+curl -X POST \
+  https://{LOCATION}-aiplatform.googleapis.com/v1/projects/{PROJECT}/locations/{LOCATION}/indexes/{INDEX_ID}:upsertDatapoints \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "datapoints": [
+      {
+        "datapointId": "dp123",
+        "restricts": [
+          { "namespace": "color", "allowList": ["red"] }
+        ]
+      }
+    ],
+    "update_mask": "restricts"
+  }'
+```
+
+* **`update_mask: restricts`** → Aggiorna solo i `restricts` per il datapoint `dp123`. Non tocca gli embedding o altri campi ([stackoverflow.com][2]).
+
+---
+
+#### 🎯 Riepilogo
+
+| update\_mask value  | Che aggiorna                     | Mantiene invariato                 |
+| ------------------- | -------------------------------- | ---------------------------------- |
+| `restricts`         | Solo restricts categorici        | embedding, numeric restricts, ecc. |
+| `numeric_restricts` | Solo restricts numerici          | embedding, categorical restricts   |
+| `all_restricts`     | Tutti i restricts (string + num) | embedding e altri campi            |
+
+---
+
+In breve: l’`update_mask` ti permette di **modificare selettivamente** i filtri di un datapoint senza rispedire l’intero contenuto: un modo efficiente e preciso per gestire i tuoi indici.
+
+[1]: https://cloud.google.com/vertex-ai/docs/reference/rest/v1/projects.locations.indexes/upsertDatapoints?utm_source=chatgpt.com "Method: indexes.upsertDatapoints | Vertex AI | Google Cloud"
+[2]: https://stackoverflow.com/questions/78108839/restricts-doesnt-seem-to-be-uploaded-when-using-a-private-endpoint-for-matching?utm_source=chatgpt.com "python - restricts doesn't seem to be uploaded when using a private ..."
+
+
 ### Conclusioni
 
 * **`upsert_datapoints`** è l’unico metodo che consente di inserire o aggiornare **direttamente** vettori in memoria via API.
