@@ -267,16 +267,111 @@ In breve: l’`update_mask` ti permette di **modificare selettivamente** i filtr
 [2]: https://stackoverflow.com/questions/78108839/restricts-doesnt-seem-to-be-uploaded-when-using-a-private-endpoint-for-matching?utm_source=chatgpt.com "python - restricts doesn't seem to be uploaded when using a private ..."
 
 
-### Conclusioni
+### ✅ Conclusioni
 
 * **`upsert_datapoints`** è l’unico metodo che consente di inserire o aggiornare **direttamente** vettori in memoria via API.
 * **Upsert** è ideale per interventi “ad hoc” su singoli o piccoli gruppi di datapoint.
-    
+
+
+`update_mask` su `upsert_datapoints` ti consente di:
+
+* Aggiornare PLURALITÀ di datapoint in una singola chiamata
+* Sostituire SOLO determinati campi interni (`restricts` o `numericRestricts`)
+* Non serve reinviare l’embedding o gli altri metadati
+* Validare che il resto del datapoint rimanga intatto, risparmiando banda e costi
+
+Quando utilizzi **`upsert_datapoints()`** con un parametro `update_mask`, specifichi **quali parti dei singoli datapoint** devono essere aggiornate, in modo isolato, senza toccare il resto del contenuto (come l'embedding o altri campi).
+
+---
+
 * **`update_metadata`** serve solo a modificare attributi non-vettoriali (display name, labels, description).
 * **Update metadata** serve esclusivamente a cambiare proprietà dell’indice (es. naming, organizzazione).
+
+---
 
 * **`update_embeddings`** permette di caricare o sovrascrivere in bulk embeddings tramite file GCS: non viaggia vettore per vettore, ma punta a directory preformattate.
 * **Update embeddings** è la via più efficiente per operazioni massicce su vettori, in particolare quando si ha già un dump su GCS.
 
 Se hai bisogno di modificare simultaneamente **vettori** e **labels**, devi combinare un `upsert_datapoints` per i vettori e un `update_metadata` per le etichette.
 Se invece vuoi solo “rifare” da zero l’index con un nuovo set di embeddings, usa `update_embeddings` con `is_complete_overwrite=True`.
+
+---
+
+### 📌 Cosa controlli davvero
+
+* `update_mask` è applicato **su ogni datapoint** presente nella lista `datapoints`, non sulla richiesta globale. ([cloud.google.com][1])
+* I valori supportati (stringhe) sono:
+
+  * `restricts` – aggiorna solo i `restricts` (filtri categorici)
+  * `numeric_restricts` – aggiorna solo i `numericRestricts` (filtri numerici)
+  * `all_restricts` – aggiorna sia `restricts` che `numericRestricts` ([cloud.google.com][1], [cloud.google.com][2])
+
+---
+
+### 🧠 Esempio pratico
+
+Immagina di avere un indice con **3 datapoint** già presenti:
+
+```python
+# Indice esistente: dp1, dp2, dp3
+# Vogliamo aggiornare solo i restricts di dp2 e dp3
+```
+
+Ecco come chiameresti `upsert_datapoints`:
+
+```python
+client.upsert_datapoints(
+    name=index_name,
+    datapoints=[
+        IndexDatapoint(datapoint_id="dp2", restricts=[...]),
+        IndexDatapoint(datapoint_id="dp3", restricts=[...]),
+    ],
+    update_mask="restricts"  # o "numeric_restricts" o "all_restricts"
+)
+```
+
+**Risultato:**
+
+* Solo i campi `restricts` verranno sovrascritti per **dp2 e dp3**
+* Gli embeddings rimangono invariati (anche se omessi nella richiesta!)
+* `dp1` non viene toccato perché non è elencato nella `datapoints` della chiamata
+
+---
+
+### 🧾 Confronto delle opzioni di `update_mask`
+
+| `update_mask`       | Cosa aggiorna                                   | Altri campi rimangono intatti                      |
+| ------------------- | ----------------------------------------------- | -------------------------------------------------- |
+| `restricts`         | Solo campi `restricts` (filtri categorici)      | embedding, numeric\_restricts, crowding\_tag, ecc. |
+| `numeric_restricts` | Solo campi `numericRestricts` (filtri numerici) | embedding, restricts, crowding\_tag, ecc.          |
+| `all_restricts`     | Sia `restricts` che `numericRestricts`          | embedding, crowding\_tag, ecc.                     |
+
+---
+
+### 🔎 Scenario completo
+
+Hai ad esempio:
+
+* `dp1`: id="1", embedding=\[...], restricts=\["red"]
+* `dp2`: id="2", embedding=\[...], restricts=\["blue"]
+* `dp3`: id="3", embedding=\[...], restricts=\["green"]
+
+Se vuoi aggiornare solo i filtri di `dp2` e `dp3`:
+
+```python
+client.upsert_datapoints(
+    name=index_name,
+    datapoints=[
+        IndexDatapoint(datapoint_id="2", restricts=[Restriction(namespace="color", allow_list=["yellow"])]),
+        IndexDatapoint(datapoint_id="3", numeric_restricts=[NumericRestriction(namespace="price", value_float=19.99)])
+    ],
+    update_mask="all_restricts"
+)
+```
+
+* `dp2`: replace solo restricts
+* `dp3`: replace solo numericRestricts
+* `dp1`: nessuna modifica
+
+---
+
