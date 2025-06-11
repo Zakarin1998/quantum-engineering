@@ -1,96 +1,109 @@
 # Google Cloud AiPlatform - MatchingEngineIndex
 
-Ecco il report strutturato in tre sezioni:
-
-1. **Panoramica e tabelle dei metodi**
-2. **Esempi di utilizzo**
-3. **Confronto e differenze implementative**
+Ecco il confronto dettagliato fra le tre operazioni disponibili su un indice Matching Engine (upsert, update\_metadata, update\_embeddings), un esempio di utilizzo reale e un’analisi delle differenze.
 
 ---
 
-## 1. Panoramica e tabelle dei metodi
+## 1. Panoramica a confronto
 
-| Metodo                 | Parametri principali                                                                                                                                                                                                                  | Cosa fa (descrizione)                                                                                                                                                            | Note implementative                                                    |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| **upsert\_datapoints** | - `name: str` (resource name dell’index)<br>- `datapoints: Sequence[Datapoint]`<br>- (opzionali) `crowding_tag`, `timeout`, `retry`, `metadata`                                                                                       | Inserisce o aggiorna uno o più datapoint nell’index. Restituisce un LRO che gestisce l’operazione asincrona di upsert.                                                           | È parte di `IndexServiceClient` del client GAPIC di Vertex AI.         |
-| **update\_metadata**   | - `display_name: Optional[str]`<br>- `description: Optional[str]`<br>- `labels: Optional[Dict[str,str]]`<br>- `request_metadata: Optional[Sequence[Tuple[str,str]]]`<br>- `update_request_timeout: Optional[float]`                   | Esegue una chiamata a `update_index` su `api_client` per modificare campi “top-level” dell’Index (nome visualizzato, descrizione, etichette).                                    | Usa un `FieldMask` costruito dinamicamente; invoca `update_index` LRO. |
-| **update\_embeddings** | - `contents_delta_uri: str` (GCS URI che punta a directory con file di delta)<br>- `is_complete_overwrite: Optional[bool]`<br>- `request_metadata: Optional[Sequence[Tuple[str,str]]]`<br>- `update_request_timeout: Optional[float]` | Chiama `update_index` passando un metadata blob con i percorsi GCS e flag di overwrite. Serve a caricare (o sovrascrivere) in blocco l’intero embedding set tramite path su GCS. | Anche qui costruisce un `FieldMask` e richiama `update_index` LRO.     |
+| Operazione            | Metodo a livello client                                                                       | Parametri principali                                                                                                                                              | Cosa fa                                                                                                                        | FieldMask usato                                                     |
+| --------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| **Upsert datapoints** | `IndexServiceClient.upsert_datapoints` <br>(wrapper: `MatchingEngineIndex.upsert_datapoints`) | - `name` (resource name dell’indice)<br>- `datapoints: List[Datapoint]`<br>- *opzionale* `validate_only`, `skip_head_request`                                     | Inserisce o aggiorna singoli datapoint (id, vettore, metadata, restrizioni). Se l’id esiste, sovrascrive embedding e metadata. | Nessun field mask (tutta la risorsa “datapoints” viene considerata) |
+| **Update metadata**   | `IndexServiceClient.update_index` <br>(wrapper: `MatchingEngineIndex.update_metadata`)        | - `gapic_index: Index(name=…, display_name?, description?, labels?)`<br>- `update_mask: FieldMask(paths=[…])`<br>- *metadati di RPC*                              | Modifica solo le proprietà di *index* (nome utente, descrizione, etichette). Non tocca datapoints né embedding.                | `["display_name","description","labels"]`                           |
+| **Update embeddings** | `IndexServiceClient.update_index` <br>(wrapper: `MatchingEngineIndex.update_embeddings`)      | - `gapic_index: Index(name=…, metadata={"contentsDeltaUri":…, "isCompleteOverwrite":…})`<br>- `update_mask: FieldMask(paths=["metadata"])`<br>- *metadati di RPC* | Informa il servizio di prendere da GCS nuovi file di embedding (delta o full), associati all’indice.                           | `["metadata"]`                                                      |
 
 ---
 
-## 2. Esempi di utilizzo
+## 2. Esempio realistico di utilizzo
 
-### 2.1 upsert\_datapoints
+Supponiamo di voler:
+
+1. Creare un indice vuoto.
+2. Upsertare un paio di datapoint (due vettori e metadati).
+3. Aggiornare solo le etichette dell’indice.
+4. Forzare un completa sovrascrittura degli embedding via GCS.
 
 ```python
 from google.cloud.aiplatform.gapic import IndexServiceClient
-from google.cloud.aiplatform.gapic.schema.index_service import Datapoint
+from google.cloud.aiplatform.gapic.schema import index_service
+from google.cloud.aiplatform import init
+from google.cloud.aiplatform.matching_engine import MatchingEngineIndex
+from google.protobuf import field_mask_pb2
 
-# Configurazione
+# Inizializzazione
+init(project="mio-progetto", location="us-central1")
 client = IndexServiceClient(client_options={"api_endpoint": "us-central1-aiplatform.googleapis.com"})
-index_name = client.index_path(project="my-project", location="us-central1", index="my-index")
 
-# Costruzione dei datapoint
+# 1) Upsert datapoints
 datapoints = [
-    Datapoint(id="doc1", feature_vector=[0.1,0.2,0.3], restricts=[], crowding_tag="", datapoint_metadata={"page": 1}),
-    Datapoint(id="doc2", feature_vector=[0.4,0.5,0.6], restricts=[], crowding_tag="", datapoint_metadata={"page": 2}),
+    index_service.Datapoint(
+        id="dp1",
+        feature_vector=[0.1, 0.2, 0.3],
+        datapoint_metadata={"tag": "prima versione"},
+    ),
+    index_service.Datapoint(
+        id="dp2",
+        feature_vector=[0.5, 0.4, 0.9],
+        datapoint_metadata={"tag": "prima versione"},
+    ),
 ]
+upsert_op = client.upsert_datapoints(
+    name="projects/mio-progetto/locations/us-central1/indexes/mio-indice",
+    datapoints=datapoints,
+)
+upsert_op.result()  # blocca fino al completamento
 
-# Chiamata upsert
-operation = client.upsert_datapoints(name=index_name, datapoints=datapoints)
-print("Upsert LRO name:", operation.operation.name)
-operation.result(timeout=300)  # attende la fine
-print("Upsert completato")
-```
-
----
-
-### 2.2 update\_metadata
-
-```python
-from google.cloud.aiplatform import MatchingEngineIndex
-
-# Supponendo di aver già istanziato l’oggetto Index
-index = MatchingEngineIndex(index_name="projects/my-project/locations/us-central1/indexes/my-index")
-
-# Aggiornamento di display_name, description e labels
+# 2) Update metadata (solo labels e display_name)
+index = MatchingEngineIndex(
+    index_name="projects/mio-progetto/locations/us-central1/indexes/mio-indice"
+)
 index.update_metadata(
-    display_name="Indice Documenti RAG",
-    description="Index per pipeline RAG custom",
-    labels={"team": "ml-eng", "env": "dev"},
-    request_metadata=[("x-goog-user-project","my-project")],
-    update_request_timeout=120.0,
+    display_name="Indice di prova",
+    labels={"env": "dev", "team": "ricerca"}
 )
-print("Nuovo display_name:", index.resource.display_name)
-print("Nuove labels:", index.resource.labels)
-```
 
----
-
-### 2.3 update\_embeddings
-
-```python
-from google.cloud.aiplatform import MatchingEngineIndex
-
-# Instanzia l’Index client wrapper
-index = MatchingEngineIndex(index_name="projects/my-project/locations/us-central1/indexes/my-index")
-
-# Carica in GCS i file di delta (JSON o CSV) in gs://my-bucket/delta/
-delta_uri = "gs://my-bucket/delta/"
-
-# Sovrascrivi completamente l’index con i nuovi embeddings
+# 3) Update embeddings via GCS (full overwrite)
 index.update_embeddings(
-    contents_delta_uri=delta_uri,
-    is_complete_overwrite=True,
-    request_metadata=[("x-goog-user-project","my-project")],
-    update_request_timeout=300.0,
+    contents_delta_uri="gs://bucket/embeddings/full_overwrite/",
+    is_complete_overwrite=True
 )
-print("Embeddings aggiornati da:", delta_uri)
+
+print("Operazioni completate con successo")
 ```
 
 ---
 
-## 3. Differenze e compatibilità
+## 3. Differenze e casi d’uso
+
+| Aspetto           | Upsert                                                                                                              | Update metadata                                                        | Update embeddings                                                                           |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| **Ambito**        | Singoli datapoint all’interno dell’indice                                                                           | Proprietà dell’indice (nome, etichette, descrizione)                   | Contenuto embedding dell’indice (da GCS)                                                    |
+| **FieldMask**     | nessuno (affronta direttamente “datapoints”)                                                                        | specifici campi metadata dell’indice                                   | `metadata`                                                                                  |
+| **Uso tipico**    | Aggiungere o correggere singoli vettori/metadati <br>– utile hot-fix su poche righe di dati                         | Cambiare display\_name/labels/description senza toccare vectordb       | Caricare in blocco file vettoriali (delta o full) tramite GCS                               |
+| **Limiti**        | - **Non** modifica labels o description<br>- Payload in request si paga e scala linearmente con numero di datapoint | - **Non** modifica embedding o datapoints <br>- Solo campi index-level | – Non consente upsert puntuale di singoli datapoint;<br>– Richiede struttura e permessi GCS |
+| **Performance**   | Buono per aggiornamenti puntuali (batch <1000)                                                                      | Istantaneo (piccola update LRO)                                        | Ottimo per dataset molto grandi (parallelismo interno GCS)                                  |
+| **Compatibilità** | Disponibile in tutte le versioni API                                                                                | Disponibile in tutte le versioni API                                   | Richiede IAM e formati GCS compatibili                                                      |
+
+### Cosa posso fare **solo** con ciascuno:
+
+* **Solo upsert**:
+
+  * Aggiungere o sostituire singoli datapoint o piccoli batch senza creare file GCS esterni.
+  * Esempio: correggere embedding sbagliato per l’id `dp123`.
+
+* **Solo update\_metadata**:
+
+  * Modificare etichette, descrizione o nome visualizzato dell’indice in modo atomico, senza influenzare i data points.
+  * Esempio: marcare l’indice come “production” via label senza toccare i vector.
+
+* **Solo update\_embeddings**:
+
+  * Caricare gigabyte di vettori in bulk tramite GCS, con opzione di full overwrite (utile per refresh totale periodico).
+  * Esempio: rimpiazzare tutti i vettori con una nuova estrazione da un corpus aggiornato, senza dover upsertare manualmente migliaia di record.
+
+---
+
+## 4. Tabella Alternativa per Differenze e compatibilità
 
 | Aspetto                | `upsert_datapoints`                                  | `update_metadata`                                             | `update_embeddings`                                                      |
 | ---------------------- | ---------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------ |
@@ -105,8 +118,13 @@ print("Embeddings aggiornati da:", delta_uri)
 ### Conclusioni
 
 * **`upsert_datapoints`** è l’unico metodo che consente di inserire o aggiornare **direttamente** vettori in memoria via API.
+* **Upsert** è ideale per interventi “ad hoc” su singoli o piccoli gruppi di datapoint.
+    
 * **`update_metadata`** serve solo a modificare attributi non-vettoriali (display name, labels, description).
+* **Update metadata** serve esclusivamente a cambiare proprietà dell’indice (es. naming, organizzazione).
+
 * **`update_embeddings`** permette di caricare o sovrascrivere in bulk embeddings tramite file GCS: non viaggia vettore per vettore, ma punta a directory preformattate.
+* **Update embeddings** è la via più efficiente per operazioni massicce su vettori, in particolare quando si ha già un dump su GCS.
 
 Se hai bisogno di modificare simultaneamente **vettori** e **labels**, devi combinare un `upsert_datapoints` per i vettori e un `update_metadata` per le etichette.
 Se invece vuoi solo “rifare” da zero l’index con un nuovo set di embeddings, usa `update_embeddings` con `is_complete_overwrite=True`.
