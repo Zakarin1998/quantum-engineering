@@ -202,7 +202,7 @@ Segue una spiegazione precisa sul funzionamento dell’attributo `update_mask` p
 
 #### 🔑 Cosa fa l’`update_mask`
 
-* Quando invochi **`upsertDatapoints`** con un campo `update_mask`, stai specificando **su quali campi interni** di **ciascun datapoint** deve applicarsi l’aggiornamento.
+* Quando invochi il metodo **`upsert_datapoints`** con un campo `update_mask`, stai specificando **su quali campi interni** di **ciascun datapoint** deve applicarsi l’aggiornamento.
 * Importante: l’`update_mask` si riferisce ai campi **interni del datapoint**, non alla richiesta intera ([cloud.google.com][1]).
 
 ---
