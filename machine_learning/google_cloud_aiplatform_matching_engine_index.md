@@ -4,6 +4,85 @@ Ecco il confronto dettagliato fra le tre operazioni disponibili su un indice Mat
 
 ---
 
+## Introduzione
+
+Ecco una panoramica dei termini chiave nel contesto di Google Vertex AI Matching Engine, così da chiarire i “ruoli” e le relazioni tra **risorsa**, **indice** e **datapoint**.
+
+---
+
+| Termine       | Cosa indica                                                                                                                            | Ruolo / Scopo                                                                                                                 |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **Risorsa**   | Qualunque oggetto gestito dalle API di Google Cloud. Ha un *resource name* univoco (es. `projects/.../locations/.../indexes/...`).     | Ogni operazione (creazione, aggiornamento, cancellazione) agisce su una risorsa. Ad es., l’indice stesso è una risorsa.       |
+| **Indice**    | Risorsa di tipo „Index“ all’interno di Matching Engine. Contiene metadati (nome, descrizione, labels) e punta a un insieme di vettori. | È il contenitore principale: definisce *dove* i datapoint vengono organizzati e *come* verranno cercati (configurazioni).     |
+| **Datapoint** | Un singolo “punto” nel tuo spazio vettoriale: un record composto da un ID, un vettore (embedding) e metadati/restrizioni opzionali.    | È l’unità atomica di ricerca: ogni datapoint è indicizzato nell’indice e potrà essere restituito come risultato di una query. |
+
+---
+
+### 🔍 Dettaglio delle relazioni
+
+1. **Risorsa**
+
+   * Ogni indice (`MatchingEngineIndex`) è una risorsa Cloud, identificata da un nome come
+
+     ```
+     projects/{PROJECT}/locations/{LOCATION}/indexes/{INDEX_ID}
+     ```
+   * Su questa risorsa puoi chiamare metodi come `create_index`, `delete_index`, `update_index`, `upsert_datapoints`.
+
+2. **Indice**
+
+   * Ha un layer “statale” (metadati) e un layer “dati” (i datapoint).
+   * Metadati di indice includono `display_name`, `description`, `labels`, e parametri di configurazione (es. algoritmo di ricerca).
+   * Dati dell’indice sono i **datapoint**: il vero contenuto vettoriale.
+
+3. **Datapoint**
+
+   * Ogni datapoint è un record JSON simile a:
+
+     ```python
+     {
+       "id": "dp123",
+       "feature_vector": [0.12, 0.98, …],
+       "datapoint_metadata": {"category": "news", …},
+       "restricts": {"lang": "en"},
+       "crowding_tag": "tag1"
+     }
+     ```
+   * Viene indicizzato nell’indice tramite operazioni come:
+
+     * **Upsert**: crea o aggiorna singoli datapoint in tempo reale.
+     * **Update\_embeddings**: ricarica in blocco embedding via GCS.
+   * Al momento della **query**, Matching Engine calcola distanze tra vettori di query e i datapoint presenti nell’indice.
+
+---
+
+### 📝 Esempio
+
+```txt
+Risorsa (Index)
+ ├─ Metadati: display_name="Prod Index", labels={"env":"prod"}
+ └─ Datapoints:
+     ├─ {id="dp1", feature_vector=[…], metadata={…}}
+     ├─ {id="dp2", feature_vector=[…], metadata={…}}
+     └─ …
+```
+
+* Quando esegui **update\_metadata**, modifichi solo i metadati dell’oggetto `Index` (risorsa).
+* Quando esegui **upsert\_datapoints**, aggiungi o aggiorni singoli record all’interno della sezione “Datapoints” dell’indice.
+* Quando esegui **update\_embeddings**, fornisci un GCS URI da cui Matching Engine ricarica in massa tutti (o un sottoinsieme) dei vettori dei datapoint.
+
+---
+
+Con questa distinzione:
+
+* **Risorsa** = “l’oggetto Cloud” su cui fai chiamate API;
+* **Indice** = specifica risorsa di tipo Index, che raccoglie metadati e datapoint;
+* **Datapoint** = singolo record vettoriale immesso nell’indice per la ricerca.
+
+Speriamo che con questa introduzione, il modello concettuale dietro queste funzionalità sia più chiaro!
+
+---
+
 ## 1. Panoramica a confronto
 
 | Operazione            | Metodo a livello client                                                                       | Parametri principali                                                                                                                                              | Cosa fa                                                                                                                        | FieldMask usato                                                     |
