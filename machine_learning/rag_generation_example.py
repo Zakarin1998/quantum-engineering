@@ -1,4 +1,3 @@
-```python
 """
 End-to-End Pipeline with Modular Wrappers: OCR → Paragraph Chunking → Embedding → Storage → Index Ingestion → RAG
 Example: University Course PDF
@@ -181,4 +180,4 @@ if __name__ == "__main__":
         "e le basi di crittografia quantistica"
     )
     rag_generation(query=q)
-```
+    
