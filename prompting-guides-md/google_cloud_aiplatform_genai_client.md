@@ -120,3 +120,135 @@ Across **8** test files, the diffs show:
   # now client.e vals is available!
   ```
 * **Explore** the new RAG corpus options and URL metadata to enrich your retrieval and grounding pipelines.
+
+
+## 🧠 6. Using the New Experimental GenAI Client
+
+Here are some concrete examples demonstrating the new features available in **google‑cloud‑aiplatform 1.97.0**:
+
+```python
+# Install: pip install google-cloud-aiplatform[evaluation]
+from vertexai import Client
+
+# Initialize Vertex AI with your GCP project and region
+client = Client(project="my-project", location="us-central1")
+
+# Access the experimental GenAI evals client
+e = client.evals  # triggers lazy loading of evals (loads pandas/tqdm)
+print(e)  # <vertexai._genai.evals.Evals object>
+
+# Example: Evaluate a simple BLEU instance
+from vertexai.types import BleuInput
+import warnings
+
+with warnings.catch_warnings():
+    warnings.simplefilter("always")
+    e.evaluate_instances(bleu_input=BleuInput())  # triggers ExperimentalWarning
+```
+
+* This shows how to use the new `Client` to access `evals` features—lazy-loaded only when needed.
+* If you don't install evaluation dependencies (`pandas`, `tqdm`), attempting to access `client.evals` will raise a descriptive `ImportError`.
+
+---
+
+## 🌐 7. Using URL Context Metadata with GenAI (Grounding)
+
+You can now pass URLs directly into the GenAI prompt and get back structured `UrlContextMetadata`, showing which URLs were actually retrieved and used.
+
+```python
+from vertexai import Client
+from vertexai.types import TextPrompt
+
+client = Client(project="my-project", location="us-central1")
+prompt = TextPrompt(
+    text="Summarize the key milestones in this NATO press release:",
+    url_context=["https://www.nato.int/cps/en/natohq/news_123456.htm"]
+)
+
+response = client.chat.send(prompt)
+print(response.content)
+
+# Inspect which URLs were accessed in grounding
+for m in response.url_context_metadata.url_metadata:
+    print(m.retrieved_url, m.url_retrieval_status)
+    # Example output:
+    # https://.../news_123456.htm SUCCESS
+```
+
+This matches the documented pattern: GenAI includes a `url_context_metadata` field listing each URL retrieved and its status ([pypi.org][1], [ai.google.dev][2], [cloud.google.com][3], [github.com][4]).
+
+---
+
+## 🔁 8. Configuring RAG with Document vs Memory Corpus
+
+The RAG features now differentiate between short-term document search and longer-term memory stores.
+
+```python
+from google.cloud.aiplatform import RagRetriever, RagGenerator
+from google.cloud.aiplatform.types import DocumentCorpus, MemoryCorpus
+
+# Build a retriever that sources from a document store
+retriever = RagRetriever(corpus=DocumentCorpus(gcs_uri="gs://my-bucket/docs/"))
+generator = RagGenerator(corpus=MemoryCorpus(gcs_uri="gs://my-bucket/memory/"))
+
+# Run RAG pipeline
+result = generator.generate_with_retrieval(
+    question="What's the ROI of renewable energy projects?",
+    retriever=retriever
+)
+print(result.text)
+```
+
+* `DocumentCorpus` is used for immediate retrieval.
+* `MemoryCorpus` handles ongoing memory for future prompts.
+
+---
+
+## 🧩 9. Integrating URL Context + RAG + GenAI (Full Workflow)
+
+Combine file/document retrieval, URL-context grounding, and memory-based RAG in a complete example:
+
+```python
+from vertexai import Client
+from vertexai.types import TextPrompt
+from google.cloud.aiplatform import RagRetriever, RagGenerator
+from google.cloud.aiplatform.types import DocumentCorpus, MemoryCorpus
+
+client = Client(project="...", location="...")
+
+# Setup retriever and generator pipelines
+retriever = RagRetriever(corpus=DocumentCorpus(gcs_uri="gs://my-bucket/news-articles/"))
+generator = RagGenerator(corpus=MemoryCorpus(gcs_uri="gs://my-bucket/conversation-memory/"))
+
+# Compose a grounded prompt
+prompt = TextPrompt(
+    text="Analyze recent trends in European energy policy.",
+    url_context=["https://ec.europa.eu/energy/topics/energy-strategy_en"]
+)
+
+# Generate answer leveraging RAG and URL grounding
+response = generator.generate_with_retrieval(
+    question=prompt,
+    retriever=retriever
+)
+
+print(response.text)
+# URL metadata shows grounding success:
+for u in response.url_context_metadata.url_metadata:
+    print(u.retrieved_url, u.url_retrieval_status)
+```
+
+---
+
+## ✨ Summary
+
+* **`Client` with `.evals`**: Try experiments or run evaluations easily.
+* **Grounding with URLs**: Get precise insights via URL metadata on what was used.
+* **Corpus configuration**: Choose between document vs memory for RAG pipelines.
+
+Let me know if you'd like additional examples—e.g., async GenAI client usage, memory persistence, or deeper evaluation scenarios!
+
+[1]: https://pypi.org/project/google-cloud-aiplatform/?utm_source=chatgpt.com "google-cloud-aiplatform · PyPI"
+[2]: https://ai.google.dev/gemini-api/docs/url-context?utm_source=chatgpt.com "URL context | Gemini API | Google AI for Developers"
+[3]: https://cloud.google.com/python/docs/reference/aiplatform/1.23.0/google.cloud.aiplatform?utm_source=chatgpt.com "Package aiplatform (1.23.0) | Python client library - Google Cloud"
+[4]: https://github.com/GoogleCloudPlatform/applied-ai-engineering-samples?utm_source=chatgpt.com "GoogleCloudPlatform/applied-ai-engineering-samples - GitHub"
