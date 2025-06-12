@@ -1,15 +1,19 @@
+```python
 """
-End-to-End Pipeline: OCR → Paragraph Chunking → Embedding → Ingestion → RAG via GenAI
+End-to-End Pipeline with Modular Wrappers: OCR → Paragraph Chunking → Embedding → Storage → Index Ingestion → RAG
 Example: University Course PDF
 """
-from google.cloud import aiplatform, documentai_v1 as documentai
-from google.cloud.aiplatform.matching_engine import MatchingEngineIndex as MEIndex
-from google.oauth2 import service_account
-from vertexai import Client as GenAIClient
-from vertexai.types import TextPrompt
 import os
 import json
 import uuid
+from typing import List, Dict, Any, Tuple
+
+from google.cloud import aiplatform, documentai_v1 as documentai
+from google.cloud.aiplatform.matching_engine import MatchingEngineIndex
+from google.oauth2 import service_account
+
+from vertexai import Client as GenAIClient
+from vertexai.types import TextPrompt
 
 # ——————————————————————————————————————————————————————
 #  CONFIGURATION
@@ -25,123 +29,156 @@ EMBEDDINGS_OUTPUT_URI = "gs://your-bucket/embeddings/"
 INDEX_NAME = "courses-index"
 EMBEDDING_MODEL = "embedding-model-1"
 
-class CoursePipeline:
-    def __init__(self):
-        # Credentials & client initialization
-        self.creds = service_account.Credentials.from_service_account_file(KEY_PATH)
-        aiplatform.init(project=PROJECT_ID, location=LOCATION, credentials=self.creds)
-        self.me_index = MEIndex(
-            index_name=f"projects/{PROJECT_ID}/locations/{LOCATION}/indexes/{INDEX_NAME}",
-            project=PROJECT_ID,
-            location=LOCATION,
-            credentials=self.creds,
-        )
-        self.docai_client = documentai.DocumentProcessorServiceClient(credentials=self.creds)
-        self.genai_client = GenAIClient(project=PROJECT_ID, location=LOCATION)
-        self.processor_name = (
-            f"projects/{PROJECT_ID}/locations/{LOCATION}/processors/{PROCESSOR_ID}"
-        )
+# ——————————————————————————————————————————————————————
+#  CLASS WRAPPERS
+# ——————————————————————————————————————————————————————
 
-    def run_ocr(self):
-        """Run OCR on PDF and save JSON to GCS"""
+class DBStorage:
+    """Handles saving and loading artifacts to GCS"""
+    def __init__(self, bucket_uri: str):
+        self.bucket_uri = bucket_uri.rstrip('/') + '/'
+
+    def save_json(self, data: Any, prefix: str) -> str:
+        local = f"/tmp/{prefix}_{uuid.uuid4()}.json"
+        uri = os.path.join(self.bucket_uri, f"{prefix}_{uuid.uuid4()}.json")
+        with open(local, 'w') as f:
+            json.dump(data, f)
+        os.system(f"gsutil cp {local} {uri}")
+        print(f"Saved JSON to {uri}")
+        return uri
+
+    def save_jsonl(self, records: List[Dict[str, Any]], prefix: str) -> str:
+        local = f"/tmp/{prefix}_{uuid.uuid4()}.jsonl"
+        uri = os.path.join(self.bucket_uri, f"{prefix}_{uuid.uuid4()}.jsonl")
+        with open(local, 'w') as f:
+            for r in records:
+                f.write(json.dumps(r) + '\n')
+        os.system(f"gsutil cp {local} {uri}")
+        print(f"Saved JSONL to {uri}")
+        return uri
+
+class DocaiWrap:
+    """Wrapper around Document AI for OCR"""
+    def __init__(self, project: str, location: str, processor_id: str, creds):
+        self.client = documentai.DocumentProcessorServiceClient(credentials=creds)
+        self.name = f"projects/{project}/locations/{location}/processors/{processor_id}"
+
+    def run_ocr(self, gcs_pdf_uri: str) -> documentai.Document:
         request = documentai.ProcessRequest(
-            name=self.processor_name,
-            raw_document=documentai.RawDocument(
-                gcs_content_uri=PDF_GCS_URI, mime_type="application/pdf"
-            ),
+            name=self.name,
+            raw_document=documentai.RawDocument(gcs_content_uri=gcs_pdf_uri, mime_type='application/pdf')
         )
-        result = self.docai_client.process_document(request=request)
-        local_path = "/tmp/ocr.json"
-        gcs_uri = os.path.join(OCR_OUTPUT_URI, f"ocr_{uuid.uuid4()}.json")
-        with open(local_path, "w") as f:
-            f.write(documentai.Document.to_json(result))
-        os.system(f"gsutil cp {local_path} {gcs_uri}")
-        print(f"OCR output saved to {gcs_uri}")
-        return result, gcs_uri
+        return self.client.process_document(request=request)
 
-    def chunk_paragraphs(self, document):
-        """Chunk OCR result into paragraphs via GenAI, save chunks to GCS"""
-        text = "".join(page.text for page in document.pages)
+class ParagraphChunkingFunctions:
+    """Functions to chunk OCR text into paragraphs"""
+    def __init__(self, genai: GenAIClient, storage: DBStorage):
+        self.genai = genai
+        self.storage = storage
+
+    def chunk(self, document: documentai.Document) -> Tuple[List[Dict[str, str]], str]:
+        text = ''.join(page.text for page in document.pages)
         prompt = (
             "Split the following university course transcript into coherent paragraphs."
             " Return a JSON list of {'id', 'text'} objects.\n\n" + text
         )
-        response = self.genai_client.generate_text(TextPrompt(text=prompt))
-        chunks = json.loads(response.content)
-        local = "/tmp/chunks.json"
-        uri = os.path.join(CHUNKS_OUTPUT_URI, f"chunks_{uuid.uuid4()}.json")
-        with open(local, "w") as f:
-            json.dump(chunks, f)
-        os.system(f"gsutil cp {local} {uri}")
-        print(f"Chunks saved to {uri}")
+        resp = self.genai.generate_text(TextPrompt(text=prompt))
+        chunks = json.loads(resp.content)
+        uri = self.storage.save_json(chunks, 'paragraph_chunks')
         return chunks, uri
 
-    def generate_embeddings(self, chunks):
-        """Generate embeddings for each chunk, save JSONL to GCS"""
-        payload = []
-        for c in chunks:
-            emb = self.genai_client.generate_embeddings(
-                model=EMBEDDING_MODEL, instances=[c['text']]
-            )
-            payload.append({
-                "id": c['id'],
-                "embedding": emb.embeddings[0],
-                "metadata": {"source": "course_pdf"},
+class EmbeddingWrap:
+    """Wrapper to generate embeddings via GenAI"""
+    def __init__(self, genai: GenAIClient, storage: DBStorage, model: str):
+        self.genai = genai
+        self.storage = storage
+        self.model = model
+
+    def embed_chunks(self, chunks: List[Dict[str, str]]) -> str:
+        records = []
+        for chunk in chunks:
+            emb_resp = self.genai.generate_embeddings(model=self.model, instances=[chunk['text']])
+            records.append({
+                'id': chunk['id'],
+                'embedding': emb_resp.embeddings[0],
+                'metadata': {'source': 'course_pdf'}
             })
-        local = "/tmp/embeddings.jsonl"
-        uri = os.path.join(EMBEDDINGS_OUTPUT_URI, f"embeddings_{uuid.uuid4()}.jsonl")
-        with open(local, "w") as f:
-            for item in payload:
-                f.write(json.dumps(item) + "\n")
-        os.system(f"gsutil cp {local} {uri}")
-        print(f"Embeddings JSONL saved to {uri}")
-        return uri
+        return self.storage.save_jsonl(records, 'embeddings')
 
-    def ingest_index(self, embeddings_uri):
-        """Ingest embeddings into Matching Engine (complete overwrite)"""
-        self.me_index.update_embeddings(
-            contents_delta_uri=embeddings_uri,
-            is_complete_overwrite=True
-        )
-        print("Matching Engine index embeddings updated.")
+class GenaiWrap:
+    """Wrapper for GenAI RAG functionality"""
+    def __init__(self, project: str, location: str):
+        self.client = GenAIClient(project=project, location=location)
 
-    def rag_query(self, question):
-        """Perform RAG-style query using GenAI & Matching Engine index"""
-        retrieval = self.genai_client.augment_prompt(
-            prompt=question,
-            retrieval_corpus=self.me_index
+    def rag_query(self, index, query: str) -> Any:
+        retrieval = self.client.augment_prompt(prompt=query, retrieval_corpus=index)
+        return self.client.generate_text(retrieval)
+
+class MEWrap:
+    """Wrapper for Matching Engine Index operations"""
+    def __init__(self, project: str, location: str, index_name: str, creds):
+        aiplatform.init(project=project, location=location, credentials=creds)
+        self.index = MatchingEngineIndex(
+            index_name=f"projects/{project}/locations/{location}/indexes/{index_name}",
+            project=project,
+            location=location,
+            credentials=creds
         )
-        resp = self.genai_client.generate_text(retrieval)
-        print("RAG Response:", resp.content)
-        return resp
+
+    def update_embeddings(self, embeddings_uri: str, overwrite: bool = True):
+        self.index.update_embeddings(contents_delta_uri=embeddings_uri, is_complete_overwrite=overwrite)
+        print("Index embeddings updated.")
 
 # ——————————————————————————————————————————————————————
-#  PIPELINE METHODS
+#  PIPELINE FUNCTIONS
 # ——————————————————————————————————————————————————————
 
 def rag_ingestion():
-    """Execute OCR → chunking → embeddings → ingestion into Matching Engine"""
-    pipeline = CoursePipeline()
-    ocr_doc, ocr_uri = pipeline.run_ocr()
-    chunks, chunks_uri = pipeline.chunk_paragraphs(ocr_doc)
-    emb_uri = pipeline.generate_embeddings(chunks)
-    pipeline.ingest_index(emb_uri)
-    return ocr_uri, chunks_uri, emb_uri
+    creds = service_account.Credentials.from_service_account_file(KEY_PATH)
+    # Storage handlers
+    ocr_storage = DBStorage(OCR_OUTPUT_URI)
+    chunk_storage = DBStorage(CHUNKS_OUTPUT_URI)
+    emb_storage = DBStorage(EMBEDDINGS_OUTPUT_URI)
+
+    # Clients
+    docai = DocaiWrap(PROJECT_ID, LOCATION, PROCESSOR_ID, creds)
+    genai = GenaiWrap(PROJECT_ID, LOCATION)
+    me = MEWrap(PROJECT_ID, LOCATION, INDEX_NAME, creds)
+
+    # OCR
+    ocr_doc = docai.run_ocr(PDF_GCS_URI)
+    ocr_storage.save_json(json.loads(documentai.Document.to_json(ocr_doc)), 'ocr')
+
+    # Paragraph chunking
+    chunker = ParagraphChunkingFunctions(genai.client, chunk_storage)
+    chunks, chunks_uri = chunker.chunk(ocr_doc)
+
+    # Embeddings
+    embedder = EmbeddingWrap(genai.client, emb_storage, EMBEDDING_MODEL)
+    emb_uri = embedder.embed_chunks(chunks)
+
+    # Ingest into Matching Engine
+    me.update_embeddings(embeddings_uri=emb_uri, overwrite=True)
+
+    return {'ocr': None, 'chunks': chunks_uri, 'embeddings': emb_uri}
 
 
 def rag_generation(query: str):
-    """Perform RAG-generation given a query against the indexed content"""
-    pipeline = CoursePipeline()
-    return pipeline.rag_query(query)
-
+    creds = service_account.Credentials.from_service_account_file(KEY_PATH)
+    me = MEWrap(PROJECT_ID, LOCATION, INDEX_NAME, creds)
+    genai = GenaiWrap(PROJECT_ID, LOCATION)
+    response = genai.rag_query(me.index, query)
+    print("RAG Response:", response.content)
+    return response
 
 if __name__ == "__main__":
-    # 1) Build and ingest index
+    # Ingest pipeline
     rag_ingestion()
 
-    # 2) Run RAG generation
-    query = (
+    # RAG generation
+    q = (
         "Spiega cosa significa la Quantum Encryption Keys "  
         "e le basi di crittografia quantistica"
     )
-    rag_generation(query=query)
+    rag_generation(query=q)
+```
