@@ -1,4 +1,3 @@
-```python
 """
 End-to-End Pipeline: OCR → Paragraph Chunking → Embedding → Ingestion → RAG via GenAI
 Example: University Course PDF
@@ -146,4 +145,3 @@ if __name__ == "__main__":
         "e le basi di crittografia quantistica"
     )
     rag_generation(query=query)
-```
